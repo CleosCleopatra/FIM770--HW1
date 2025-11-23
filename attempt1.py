@@ -2,8 +2,10 @@ from scipy.optimize import fsolve
 from scipy.misc import derivative
 import numpy as np
 
+
 def f(x, r):
-    return 1/5 + 7/10 / (1+ np.exp(80*(1-x)))-r*x**4
+    z = np.clip(80*(1-x), -500, 500) #Is this good/allowed?
+    return 1/5 + 7/10 / (1+ np.exp(z))-r*x**4
 
 rs=np.arange(0, 1, 0.001)
 
@@ -11,18 +13,26 @@ guesses =[0.0, 0.3, 0.6]
 branches = [[] for _ in guesses]
 stability = [[] for _ in guesses]
 
+def dfdx(x, r):
+    h = 1e-6
+    return (f(x+h, r) - f(x-h, r)) / (2*h)
+
 
 
 for r in rs:
-    roots_r = []
-    for i, guesses in enumerate(guesses):
-        root = fsolve(f, x0=guesses, args=(r,))[0]
+    for i, guess in enumerate(guesses):
+        root = fsolve(f, x0=guess, args=(r,))
+        if len(root) > 0:
+            root = root[0]
+        else: 
+            continue
         branches[i].append(root)
-        f_prime = derivative(lambda x: f(x,r), root, dx = 1e-6)
+        f_prime = dfdx(root, r)
         stability[i].append(f_prime < 0)
-        guesses[i] = root[0]
-        roots_r.append(root[0])
-    roots_r = list(set(np.round(roots_r, 6)))
+        print(f"guesses is {guesses} and root is {root}")
+        guesses[i] = root
+        #roots_r.append(root)
+    #roots_r = list(set(np.round(roots_r, 6)))
     
 import matplotlib.pyplot as plt
 
