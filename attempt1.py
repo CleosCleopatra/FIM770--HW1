@@ -76,39 +76,19 @@ plt.figure(figsize=(8,6))
 #    plt.plot(r_vals[stab_vals], x_vals[stab_vals], '-', linewidth = 2)
     
 lable_added = False
-stable_r_list = [[], []]
-stable_x_list =  [[], []]
+stable_r_list = []
+stable_x_list =  []
 label_added = False
-not_here = all_x[~all_stable]
-rounded_vals = [round(num, 2) for num in not_here]
-print(f'round is {rounded_vals[5]}')
-cur_line = 0
 for i, r in enumerate(rs):
     roots, stab = find_roots_for_r(r)
     for x, s in zip(roots, stab):
         if s: 
-            stable_r_list[cur_line].append(r)
-            stable_x_list[cur_line].append(x)
-            #print(f"not here is {not_here} and x is {x}")
-            x = round(x, 2)
-            print(x)
-            if x in rounded_vals:
-                cur_line = 1
-                print("hi")
-   #             plt.plot(r,x, 'go', label = 'stable')
-    #            lable_added = True
-    #            print("lable aded")
-    #        else:
-     #           plt.plot(r,x,'go')
-stable_r_list_1 = np.array(stable_r_list[0])
-
-stable_r_list_2 = np.array(stable_r_list[1])
-stable_x_list_1 = np.array(stable_x_list[0])
-stable_x_list_2 = np.array(stable_x_list[1])
-order_1 = np.argsort(stable_r_list_1)
-order_2 = np.argsort(stable_r_list_2)
-#print(stable_r_list_1[order_1])
-plt.plot(stable_r_list_1[order_1], stable_x_list_1[order_1], '-')
+            if not lable_added:
+                plt.plot(r,x, 'go', label = 'stable')
+                lable_added = True
+                print("lable aded")
+            else:
+                plt.plot(r,x,'go')
 #plt.scatter(all_r[all_stable], all_x[all_stable], s=12, c='green', label='stable')
 plt.plot(all_r[~all_stable], all_x[~all_stable], ':', label = 'unstable')
 #plt.plot(all_r[all_stable], all_x[all_stable], '-', linewidth=1.8, label='stable')
