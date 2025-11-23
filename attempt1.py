@@ -1,20 +1,18 @@
-# Fixing the minor syntax issue and re-running to produce the bifurcation diagram files
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import brentq
 
-# RHS F(x; r)
 def F(x, r):
     g = 1.0 / (1.0 + np.exp(np.clip(80*(1 - x), -500, 500)))
     return 0.2 + 0.7 * g - r * x**4
 
-# Analytical derivative F'(x; r)
 def dFdx(x, r):
     z = np.clip(80*(1 - x), -500, 500)
     g = 1.0 / (1.0 + np.exp(z))
     return 0.7 * 80 * g * (1 - g) - 4 * r * x**3
 
-# Scan x-intervals and find sign changes
+
 def find_roots_for_r(r, x_min=0.0, x_max=2.0, n_intervals=800):
     xs = np.linspace(x_min, x_max, n_intervals + 1)
     Fx = F(xs, r)
@@ -31,7 +29,6 @@ def find_roots_for_r(r, x_min=0.0, x_max=2.0, n_intervals=800):
             except ValueError:
                 pass
 
-    # Deduplicate close roots
     roots = np.array(sorted(roots))
     if roots.size == 0:
         return np.array([]), np.array([])
@@ -43,7 +40,6 @@ def find_roots_for_r(r, x_min=0.0, x_max=2.0, n_intervals=800):
     stab = dFdx(roots, r) < 0
     return roots, stab
 
-# Parameter sweep over r
 rs = np.linspace(0.0, 1.0, 501)
 all_r = []
 all_x = []
@@ -62,12 +58,10 @@ all_r = np.array(all_r)
 all_x = np.array(all_x)
 all_stable = np.array(all_stable)
 
-# Detect approximate bifurcation r's from changes in root count
 bif_rs = []
 for i in range(1, len(root_counts)):
     if root_counts[i] != root_counts[i-1]:
         bif_rs.append(0.5 * (rs[i] + rs[i-1]))
-
 bistable_mask = np.array(root_counts) >= 2
 r_bistable = rs[bistable_mask]
 if r_bistable.size > 0:
@@ -75,14 +69,68 @@ if r_bistable.size > 0:
 
 # Plot
 plt.figure(figsize=(8,6))
-if r_bistable.size > 0:
-    plt.axvspan(r_lo, r_hi, color='lightblue', alpha = 0.3, label= 'biastability')
-plt.plot(all_r[all_stable], all_x[all_stable], '-', linewidth=1.8, label='stable')
-plt.plot(all_r[~all_stable], all_x[~all_stable], ':', linewidth=1.8, label='unstable')
-for br in bif_rs:
-    plt.axvline(br, linestyle='--', linewidth=1.0, color='gray')
-    plt.text(br, 0.95, 'saddle-node', rotation=90, va='top', ha='right', fontsize=8)
 
+
+#for r_vals, x_vals, stab_vals in all_r, all_x, all_stable:
+#    r_vals = np.array(r_vals); x_vals = np.array(x_vals); stab_vals = np.array(stab_vals)
+#    plt.plot(r_vals[stab_vals], x_vals[stab_vals], '-', linewidth = 2)
+    
+lable_added = False
+stable_r_list = [[], []]
+stable_x_list =  [[], []]
+label_added = False
+not_here = all_x[~all_stable]
+rounded_vals = [round(num, 2) for num in not_here]
+print(f'round is {rounded_vals[5]}')
+cur_line = 0
+for i, r in enumerate(rs):
+    roots, stab = find_roots_for_r(r)
+    for x, s in zip(roots, stab):
+        if s: 
+            stable_r_list[cur_line].append(r)
+            stable_x_list[cur_line].append(x)
+            #print(f"not here is {not_here} and x is {x}")
+            x = round(x, 2)
+            print(x)
+            if x in rounded_vals:
+                cur_line = 1
+                print("hi")
+   #             plt.plot(r,x, 'go', label = 'stable')
+    #            lable_added = True
+    #            print("lable aded")
+    #        else:
+     #           plt.plot(r,x,'go')
+stable_r_list_1 = np.array(stable_r_list[0])
+
+stable_r_list_2 = np.array(stable_r_list[1])
+stable_x_list_1 = np.array(stable_x_list[0])
+stable_x_list_2 = np.array(stable_x_list[1])
+order_1 = np.argsort(stable_r_list_1)
+order_2 = np.argsort(stable_r_list_2)
+#print(stable_r_list_1[order_1])
+plt.plot(stable_r_list_1[order_1], stable_x_list_1[order_1], '-')
+#plt.scatter(all_r[all_stable], all_x[all_stable], s=12, c='green', label='stable')
+plt.plot(all_r[~all_stable], all_x[~all_stable], ':', label = 'unstable')
+#plt.plot(all_r[all_stable], all_x[all_stable], '-', linewidth=1.8, label='stable')
+#plt.plot(all_r[~all_stable], all_x[~all_stable], ':', linewidth=1.8, label='unstable')
+
+for br in bif_rs:
+    if br > 0.2:
+        plt.axvline(br, linestyle='--', linewidth=1.0, color='gray')
+        plt.text(br, 0.95, 'saddle-node', rotation=90, va='top', ha='right', fontsize=8)
+    print(br)
+
+if len(bif_rs) > 0:
+    r_c = max(bif_rs)
+else:
+    r_c = None
+
+if r_c is not None:
+    roots_rc, stab_rc = find_roots_for_r(r_c)
+    if len(roots_rc) > 0:
+        derivs = np.abs(dFdx(roots_rc, r_c))
+        x_c = roots_rc[np.argmin(derivs)]
+        print(f"rc = {r_c: .3f} and x* = {x_c: .3f}")
 plt.xlabel('r (dimensionless)')
 plt.ylabel('x* (dimensionless temperature)')
 plt.title('Bifurcation diagram: fixed points x* vs r')
