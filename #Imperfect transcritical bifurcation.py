@@ -1,5 +1,76 @@
 import numpy as np
 from matplotlib import pyplot as plt
+
+#Grid
+r_min, r_max = -4, 4 #What should the interval be
+h_min, h_max = -4, 4 #int?
+nr, nh = 400, 400
+r = np.linspace(r_min, r_max, nr)
+h = np.linspace(h_min, h_max, nh)
+R, H = np.meshgrid(r,h)
+D = R**2 + 4*H
+
+#Masks
+two_fp = D > 0
+one_fp = np.isclose(D, 0, atol = 1e-6)
+no_fp = D < 0
+
+
+fig, ax = plt.subplots(figsize=(8,8))
+
+Z = np.zeros_like(D, dtype = int)
+Z[no_fp] = 0
+Z[one_fp] = 1
+Z[two_fp] = 2
+cs = ax.contourf(R, H, Z, levels=[-0.5, 0.5, 1.5, 2.5])
+
+#draw bifurcation curve
+r_curve = np.linspace(r_min, r_max, 400)
+h_curve = -r_curve ** 2 / 4
+ax.plot(r_curve, h_curve, linewidth =2)
+
+#regions
+ax.text(0, 2.5, 'Two real fixed points, 1 stable and 1 unstable', ha = 'center', va='center', fontsize = 12)
+ax.text(0, -3, 'No real fixed points', ha='center', va='center', fontsize=12)
+ax.text(0, -0.2, 'Curve', ha='center', va='center', fontsize=12) #????
+
+
+
+ax.set_xlabel('r')
+ax.set_ylabel('h')
+ax.set_title("Bifurcation diagram ")
+
+ax.set_xlim(r_min, r_max)
+ax.set_ylim(h_min, h_max)
+ax.grid(True, linestyle=':')
+
+ax.legend(loc='lower left')
+
+fig.tight_layout()
+plt.show()
+
+
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def fixed_points(r,h):
     sqr = np.sqrt(r**2+4*h)
     c1 = r + sqr
@@ -69,3 +140,4 @@ plt.show()
 
 
 #png_path, pdf_path, "num bifurcation intervals detected", len(bif_rs)
+"""
